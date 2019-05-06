@@ -4,8 +4,11 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from urllib.parse import quote
 from multiprocessing import Pool
+from os import listdir
+from os.path import isfile, join
 
 host = 'http://www.stixoi.info/'
+folder_to_save_files = 'input/'
 
 
 def scrape(link):
@@ -36,12 +39,12 @@ def scrape(link):
             lyrics_list = [x.text for x in soup_lyrics.findAll("div", {"class": "lyrics"})]
             all_lyrics += "\r\n\n".join(lyrics_list)
             count_poems += 1
-    with open('input/{}'.format(link.contents[0]), 'w+') as f:
-        f.write((all_lyrics))
+    with open('{}{}'.format(folder_to_save_files, link.contents[0]), 'w+') as f:
+        f.write(all_lyrics)
         all_lyrics = ''
 
 
-def main():
+def scan():
     url = 'http://www.stixoi.info/stixoi.php?info=Lyrics&act=lyricist&sort=alpha'
 
     html = urlopen(url)
@@ -56,5 +59,21 @@ def main():
     p.terminate()
     p.join()
 
+
+def merge_files(all_lyrics_file):
+    only_files = [f for f in listdir(folder_to_save_files) if isfile(join(folder_to_save_files, f))]
+    all_lyrics = ""
+    for lyrics_file in only_files:
+        with open("{}{}".format(folder_to_save_files, lyrics_file)) as f:
+            print("Reading File: {}".format(lyrics_file))
+            letter_lyrics = f.readlines()
+            all_lyrics += "".join(letter_lyrics)
+    with open(all_lyrics_file, "w+") as f:
+        f.write(all_lyrics)
+
+
 if __name__ == '__main__':
-    main()
+    scan()
+    output_file = "{}whole.txt".format(folder_to_save_files)
+    merge_files(output_file)
+    print("Scraping finished.")
